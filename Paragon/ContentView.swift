@@ -3,18 +3,23 @@ import PhotosUI
 import Charts
 
 struct ContentView: View {
+    
     @State private var zdjecieGaleria: PhotosPickerItem?
     @State private var pokazDodaj: Bool = false
     @State private var dodajNazwa: String = ""
     @State private var dodajKategoria: String = ""
     @State private var dodajCena: String = ""
     @State private var dodawanie = dodawanieproduktow()
+    @State private var pozytywneDodanie: Bool = false
+    
     var body: some View {
-        // 1. Główny kontener nawigacji
+
         NavigationStack {
             
             ZStack{
+                
                 VStack(spacing: 20) {
+                    
                     // --- POLE Z WYKRESEM I ANALIZĄ ---
                     VStack(spacing: 15) {
                         ZStack{
@@ -25,14 +30,15 @@ struct ContentView: View {
                             }.chartLegend(.hidden)
                                 .frame(width: 300, height: 280)
                             Text(dodawanie.sumaWydatkow, format: .currency(code: "PLN")).font(Font.title2.bold())
+                            
                         }
                         
                         
                         // Guzik analizy - pzrenosi do inneg okna
-                        NavigationLink {
-                            AnalizaView()
-                        } label: {
-                            Label("Analiza", systemImage: "chart.bar")
+                    NavigationLink {
+                        AnalizaView()
+                    } label: {
+                        Label("Analiza", systemImage: "chart.bar")
                                 .font(.title2)
                         }
                         .padding() // <- odstepy w srodku
@@ -42,6 +48,7 @@ struct ContentView: View {
                         .cornerRadius(1000) // Zaokrąglenie w pigułkę
                     }
                     .padding(.horizontal)
+                    
                     
                     HStack{
                         Text("Ostatnie paragony:")
@@ -117,12 +124,15 @@ struct ContentView: View {
                                 .foregroundStyle(.black)
                         }
                     }
-                }
+                }.zIndex(2)
+                
                 if(pokazDodaj == true){
                     Color.black.opacity(0.4).ignoresSafeArea()
                         VStack{
                             HStack{
+                                
                                 Text("Dodaj produkty").font(Font.title.bold()).padding()
+                                
                                 Button
                                 {
                                     withAnimation {
@@ -139,23 +149,37 @@ struct ContentView: View {
                             }
                             
                             VStack{
+                                
                                 TextField("Nazwa produktu", text: $dodajNazwa)
                                 TextField("Cena produktu", text: $dodajCena).keyboardType(.decimalPad)
                                 TextField("Kategoria produktu", text: $dodajKategoria)
                                 
                                 Button{
-                                    if(dodajKategoria == ""){
+                                    
+                                    if(dodajKategoria == "" ){
                                         dodajKategoria = "Inne"
                                     }
+                                    
                                     if(dodajCena != "" && dodajNazwa != ""){
                                         let czyszczenie = dodajCena .replacingOccurrences(of: ",", with: ".")
                                         let doublecena = Double(czyszczenie) ?? 0.00
                                         let nowyProdukt = Produkt( nazwa: dodajNazwa, cena: doublecena, kategoria: dodajKategoria)
-                                        print(nowyProdukt)
+                                        
+                                        print(nowyProdukt) // do wywalenia
+                                        
                                         dodawanie.Testoweprodukty.append(nowyProdukt)
                                         dodajCena = ""
                                         dodajNazwa = ""
                                         dodajKategoria = ""
+                                        withAnimation{
+                                            pozytywneDodanie = true
+                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                            withAnimation{
+                                                pozytywneDodanie = false
+                                            }
+                                        }
+                                
                                     }
                                     
                                     
@@ -167,22 +191,45 @@ struct ContentView: View {
                                         .background(Color.mainFiolet)
                                         .foregroundStyle(.white)
                                         .cornerRadius(1000)
+                                        
                                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .disabled(dodajCena == "" || dodajNazwa == "")
                                 
                             }.textFieldStyle(.roundedBorder)
                                 .padding()
+                                .transition(.opacity)
                             
                             
                             
                             Spacer()
-                        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
                          .background(Color.tlo)
+                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                          .cornerRadius(30)
                          .padding(60)
                          .shadow(radius: 10)
                          .transition(.scale)
+                         
                 }
-            }///koniec z
+                
+
+                if (pozytywneDodanie){
+                    VStack{
+                        Text(pozytywneDodanie ? "Dodano produkt!" : "Wpisano złe dane!" )
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(pozytywneDodanie ? .green : .red) // Tło tylko dla tekstu!
+                            .foregroundStyle(.white)
+                            .cornerRadius(15)
+                            .padding(.horizontal)
+                            .padding(.top, 50)
+                            
+                    }   .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .ignoresSafeArea()
+                    Spacer()
+                }
+
+            }
         }
     }
 }
